@@ -1,0 +1,687 @@
+# ============================================================
+# Export all available FDTD model information to TXT
+# Compatible with Lumerical FDTD scripting environment
+# ============================================================
+
+clear;
+
+# ------------------------------------------------------------
+# 输出文件路径
+# ------------------------------------------------------------
+filename = "fdtd_model_complete_export.txt";
+
+# 如果希望指定绝对路径，可以改成例如：
+# filename = "D:/LumericalExport/fdtd_model_complete_export.txt";
+
+out = "";
+
+out = out + "============================================================\n";
+out = out + "Lumerical FDTD MODEL EXPORT\n";
+out = out + "============================================================\n";
+out = out + "Export time: not recorded\n";
+out = out + "\n";
+
+# ============================================================
+# 工具函数
+# ============================================================
+
+# ------------------------------------------------------------
+# 将一个属性读取并转换成文本
+# 读取失败时自动跳过
+# ------------------------------------------------------------
+function s = read_property(object_path, property_name) {
+    s = "";
+
+    try {
+        value = getnamed(object_path, property_name);
+
+        # 对数值、矩阵、复数、字符串等尽可能转换
+        try {
+            value_text = num2str(value);
+        } catch {
+            value_text = value;
+        }
+
+        s = property_name + " = " + value_text + "\n";
+
+    } catch {
+        # 属性不存在或当前对象不支持该属性时跳过
+        s = "";
+    }
+}
+
+
+# ------------------------------------------------------------
+# 尝试读取一组属性
+# ------------------------------------------------------------
+function s = read_property_list(object_path, property_list) {
+    s = "";
+
+    for (k=1:length(property_list)) {
+        s = s + read_property(object_path, property_list(k));
+    }
+}
+
+
+# ============================================================
+# 常见属性列表
+# ============================================================
+
+# ------------------------------------------------------------
+# 所有对象通常可能具有的通用属性
+# ------------------------------------------------------------
+common_properties = [
+    "name",
+    "type",
+    "enabled",
+    "use relative coordinates",
+    "x",
+    "y",
+    "z",
+    "x min",
+    "x max",
+    "y min",
+    "y max",
+    "z min",
+    "z max",
+    "x span",
+    "y span",
+    "z span",
+    "material",
+    "material fit",
+    "mesh order",
+    "override mesh order",
+    "alpha",
+    "render type",
+    "groupscope"
+];
+
+
+# ------------------------------------------------------------
+# 几何对象属性
+# ------------------------------------------------------------
+geometry_properties = [
+    "x",
+    "y",
+    "z",
+    "x min",
+    "x max",
+    "y min",
+    "y max",
+    "z min",
+    "z max",
+    "x span",
+    "y span",
+    "z span",
+    "radius",
+    "radius 1",
+    "radius 2",
+    "radius 3",
+    "height",
+    "first axis",
+    "second axis",
+    "third axis",
+    "theta",
+    "phi",
+    "rotation 1",
+    "rotation 2",
+    "rotation 3",
+    "vertices",
+    "material",
+    "material fit",
+    "mesh order",
+    "override mesh order",
+    "alpha",
+    "render type"
+];
+
+
+# ------------------------------------------------------------
+# FDTD 区域属性
+# ------------------------------------------------------------
+fdtd_properties = [
+    "name",
+    "type",
+    "dimension",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "x min",
+    "x max",
+    "y min",
+    "y max",
+    "z min",
+    "z max",
+
+    "mesh accuracy",
+    "mesh refinement",
+    "mesh refinement factor",
+    "use conformal mesh",
+    "conformal mesh accuracy",
+    "conformal variant",
+    "mesh type",
+
+    "simulation time",
+    "auto shutoff min",
+    "auto shutoff max",
+    "auto shutoff level",
+    "shutoff method",
+
+    "x min bc",
+    "x max bc",
+    "y min bc",
+    "y max bc",
+    "z min bc",
+    "z max bc",
+
+    "x min pml profile",
+    "x max pml profile",
+    "y min pml profile",
+    "y max pml profile",
+    "z min pml profile",
+    "z max pml profile",
+
+    "x min pml layers",
+    "x max pml layers",
+    "y min pml layers",
+    "y max pml layers",
+    "z min pml layers",
+    "z max pml layers",
+
+    "x min symmetric bc",
+    "x max symmetric bc",
+    "y min symmetric bc",
+    "y max symmetric bc",
+    "z min symmetric bc",
+    "z max symmetric bc",
+
+    "x min periodic bc",
+    "x max periodic bc",
+    "y min periodic bc",
+    "y max periodic bc",
+    "z min periodic bc",
+    "z max periodic bc",
+
+    "allow symmetry on all boundaries",
+    "background material",
+    "background index"
+];
+
+
+# ------------------------------------------------------------
+# 光源属性
+# ------------------------------------------------------------
+source_properties = [
+    "name",
+    "type",
+    "enabled",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "injection axis",
+    "direction",
+    "polarization angle",
+    "phase",
+    "amplitude",
+    "mode selection",
+    "mode number",
+    "use source limits",
+    "wavelength start",
+    "wavelength stop",
+    "frequency start",
+    "frequency stop",
+    "frequency points",
+    "wavelength points",
+    "angle theta",
+    "angle phi",
+    "angle",
+    "plane wave type",
+    "waist radius w0",
+    "distance from waist",
+    "beam size",
+    "beam divergence",
+    "use scalar approximation",
+    "use apodization",
+    "apodization",
+    "use chirp",
+    "chirp",
+    "number of modes",
+    "mode calculation",
+    "use global source settings"
+];
+
+
+# ------------------------------------------------------------
+# 监视器属性
+# ------------------------------------------------------------
+monitor_properties = [
+    "name",
+    "type",
+    "enabled",
+    "monitor type",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "x min",
+    "x max",
+    "y min",
+    "y max",
+    "z min",
+    "z max",
+    "override global monitor settings",
+    "use wavelength spacing",
+    "use frequency spacing",
+    "use source limits",
+    "wavelength start",
+    "wavelength stop",
+    "frequency start",
+    "frequency stop",
+    "frequency points",
+    "use linear wavelength spacing",
+    "use linear frequency spacing",
+    "use spatial interpolation",
+    "spatial interpolation",
+    "record surface",
+    "record data",
+    "use reduced data",
+    "down sample X",
+    "down sample Y",
+    "down sample Z",
+    "use time domain",
+    "use frequency domain",
+    "apodization",
+    "apodization time start",
+    "apodization time width",
+    "make plots"
+];
+
+
+# ------------------------------------------------------------
+# Mesh override 属性
+# ------------------------------------------------------------
+mesh_properties = [
+    "name",
+    "type",
+    "enabled",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "x min",
+    "x max",
+    "y min",
+    "y max",
+    "z min",
+    "z max",
+    "override global mesh settings",
+    "set mesh order",
+    "mesh order",
+    "dx",
+    "dy",
+    "dz",
+    "mesh accuracy",
+    "use relative coordinates"
+];
+
+
+# ------------------------------------------------------------
+# Port 属性
+# ------------------------------------------------------------
+port_properties = [
+    "name",
+    "type",
+    "enabled",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "injection axis",
+    "direction",
+    "mode selection",
+    "mode number",
+    "number of modes",
+    "mode calculation",
+    "use global source settings",
+    "wavelength start",
+    "wavelength stop",
+    "frequency start",
+    "frequency stop",
+    "frequency points",
+    "polarization angle",
+    "phase",
+    "amplitude"
+];
+
+
+# ------------------------------------------------------------
+# 结构组属性
+# ------------------------------------------------------------
+structure_group_properties = [
+    "name",
+    "type",
+    "enabled",
+    "x",
+    "y",
+    "z",
+    "x span",
+    "y span",
+    "z span",
+    "use relative coordinates",
+    "construction group",
+    "use script",
+    "script"
+];
+
+
+# ============================================================
+# 导出一个对象
+# ============================================================
+
+function s = dump_one_object(object_path) {
+
+    s = "";
+
+    # 获取对象名称和类型
+    object_name = "";
+    object_type = "";
+
+    try {
+        object_name = getnamed(object_path, "name");
+    } catch {
+        object_name = object_path;
+    }
+
+    try {
+        object_type = getnamed(object_path, "type");
+    } catch {
+        object_type = "UNKNOWN";
+    }
+
+    s = s + "\n";
+    s = s + "------------------------------------------------------------\n";
+    s = s + "OBJECT PATH: " + object_path + "\n";
+    s = s + "OBJECT NAME: " + object_name + "\n";
+    s = s + "OBJECT TYPE: " + object_type + "\n";
+    s = s + "------------------------------------------------------------\n";
+
+    # 先读取通用属性
+    s = s + read_property_list(object_path, common_properties);
+
+    # 根据对象类型读取专用属性
+    if (object_type=="FDTD") {
+        s = s + "\n[FDTD PROPERTIES]\n";
+        s = s + read_property_list(object_path, fdtd_properties);
+    }
+
+    if (object_type=="rectangle") {
+        s = s + "\n[RECTANGLE PROPERTIES]\n";
+        s = s + read_property_list(object_path, geometry_properties);
+    }
+
+    if (object_type=="circle") {
+        s = s + "\n[CIRCLE PROPERTIES]\n";
+        s = s + read_property_list(object_path, geometry_properties);
+    }
+
+    if (object_type=="sphere") {
+        s = s + "\n[SPHERE PROPERTIES]\n";
+        s = s + read_property_list(object_path, geometry_properties);
+    }
+
+    if (object_type=="cylinder") {
+        s = s + "\n[CYLINDER PROPERTIES]\n";
+        s = s + read_property_list(object_path, geometry_properties);
+    }
+
+    if (object_type=="polygon") {
+        s = s + "\n[POLYGON PROPERTIES]\n";
+        s = s + read_property_list(object_path, geometry_properties);
+    }
+
+    if (object_type=="group") {
+        s = s + "\n[GROUP PROPERTIES]\n";
+        s = s + read_property_list(object_path, structure_group_properties);
+    }
+
+    if (object_type=="structure group") {
+        s = s + "\n[STRUCTURE GROUP PROPERTIES]\n";
+        s = s + read_property_list(object_path, structure_group_properties);
+    }
+
+    # 常见 source 类型
+    if (object_type=="plane wave") {
+        s = s + "\n[SOURCE PROPERTIES]\n";
+        s = s + read_property_list(object_path, source_properties);
+    }
+
+    if (object_type=="gaussian") {
+        s = s + "\n[SOURCE PROPERTIES]\n";
+        s = s + read_property_list(object_path, source_properties);
+    }
+
+    if (object_type=="mode source") {
+        s = s + "\n[SOURCE PROPERTIES]\n";
+        s = s + read_property_list(object_path, source_properties);
+    }
+
+    if (object_type=="source") {
+        s = s + "\n[SOURCE PROPERTIES]\n";
+        s = s + read_property_list(object_path, source_properties);
+    }
+
+    # 常见 monitor 类型
+    if (object_type=="monitor") {
+        s = s + "\n[MONITOR PROPERTIES]\n";
+        s = s + read_property_list(object_path, monitor_properties);
+    }
+
+    if (object_type=="power") {
+        s = s + "\n[MONITOR PROPERTIES]\n";
+        s = s + read_property_list(object_path, monitor_properties);
+    }
+
+    if (object_type=="index monitor") {
+        s = s + "\n[MONITOR PROPERTIES]\n";
+        s = s + read_property_list(object_path, monitor_properties);
+    }
+
+    # Mesh override
+    if (object_type=="mesh") {
+        s = s + "\n[MESH PROPERTIES]\n";
+        s = s + read_property_list(object_path, mesh_properties);
+    }
+
+    if (object_type=="mesh override") {
+        s = s + "\n[MESH PROPERTIES]\n";
+        s = s + read_property_list(object_path, mesh_properties);
+    }
+
+    # Port
+    if (object_type=="port") {
+        s = s + "\n[PORT PROPERTIES]\n";
+        s = s + read_property_list(object_path, port_properties);
+    }
+
+    # 尝试获取 structure group 的脚本
+    try {
+        select(object_path);
+        group_script = getscript;
+
+        s = s + "\n[STRUCTURE GROUP SCRIPT]\n";
+        s = s + group_script + "\n";
+    } catch {
+        # 非 structure group 对象忽略
+    }
+}
+
+
+# ============================================================
+# 递归遍历 Objects Tree
+# ============================================================
+
+function s = dump_scope(scope_path) {
+
+    s = "";
+
+    # 切换到当前 group scope
+    try {
+        groupscope(scope_path);
+    } catch {
+        return;
+    }
+
+    # 获取当前 scope 下的对象名称
+    try {
+        object_names = getall;
+    } catch {
+        return;
+    }
+
+    for (n=1:length(object_names)) {
+
+        current_name = object_names(n);
+
+        if (scope_path=="::model") {
+            current_path = "::model::" + current_name;
+        } else {
+            current_path = scope_path + "::" + current_name;
+        }
+
+        # 导出当前对象
+        s = s + dump_one_object(current_path);
+
+        # 判断是否为 group，并继续递归
+        current_type = "";
+
+        try {
+            current_type = getnamed(current_path, "type");
+        } catch {
+            current_type = "";
+        }
+
+        if ((current_type=="group") | (current_type=="structure group")) {
+            s = s + dump_scope(current_path);
+        }
+    }
+}
+
+
+# ============================================================
+# 导出 FDTD 全局设置
+# ============================================================
+
+out = out + "============================================================\n";
+out = out + "GLOBAL SOURCE SETTINGS\n";
+out = out + "============================================================\n";
+
+global_source_properties = [
+    "wavelength start",
+    "wavelength stop",
+    "frequency start",
+    "frequency stop",
+    "frequency points",
+    "wavelength points",
+    "pulse offset",
+    "pulse width",
+    "set frequency",
+    "set wavelength"
+];
+
+for (i=1:length(global_source_properties)) {
+    property_name = global_source_properties(i);
+
+    try {
+        value = getglobalsource(property_name);
+
+        try {
+            value_text = num2str(value);
+        } catch {
+            value_text = value;
+        }
+
+        out = out + property_name + " = " + value_text + "\n";
+    } catch {
+        # 忽略当前版本不存在的属性
+    }
+}
+
+
+# ============================================================
+# 导出全局监视器设置
+# ============================================================
+
+out = out + "\n";
+out = out + "============================================================\n";
+out = out + "GLOBAL MONITOR SETTINGS\n";
+out = out + "============================================================\n";
+
+global_monitor_properties = [
+    "use wavelength spacing",
+    "use frequency spacing",
+    "wavelength start",
+    "wavelength stop",
+    "frequency start",
+    "frequency stop",
+    "frequency points",
+    "use linear wavelength spacing",
+    "use linear frequency spacing",
+    "use spatial interpolation",
+    "record surface",
+    "record data",
+    "use reduced data"
+];
+
+for (i=1:length(global_monitor_properties)) {
+    property_name = global_monitor_properties(i);
+
+    try {
+        value = getglobalmonitor(property_name);
+
+        try {
+            value_text = num2str(value);
+        } catch {
+            value_text = value;
+        }
+
+        out = out + property_name + " = " + value_text + "\n";
+    } catch {
+        # 忽略当前版本不存在的属性
+    }
+}
+
+
+# ============================================================
+# 开始递归导出 Objects Tree
+# ============================================================
+
+out = out + "\n";
+out = out + "============================================================\n";
+out = out + "OBJECT TREE DATA\n";
+out = out + "============================================================\n";
+
+out = out + dump_scope("::model");
+
+
+# ============================================================
+# 写入 TXT
+# ============================================================
+
+write(filename, out);
+
+?"============================================================";
+?"Export completed.";
+?"Output file: " + filename;
+?"============================================================";
