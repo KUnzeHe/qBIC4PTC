@@ -7,4 +7,4 @@
 1. [PROJECT.md](PROJECT.md)：研究目标、基本假设、工作流程、决策门槛、验收标准与待确认问题。
 2. [SiN_qBIC_visible_PTC_experiment_concept.md](SiN_qBIC_visible_PTC_experiment_concept.md)：物理机制、参数窗口、器件与光路方案、测量判据及阶段计划。
 
-本目录可直接作为 Obsidian 仓库或普通 Markdown 文件夹打开。目前没有可运行的仿真代码或实验数据。下一步是盘点实际设备与材料参数，并从静态 SiN qBIC 单元设计开始。
+本目录可直接作为 Obsidian 仓库或普通 Markdown 文件夹打开。`sim/` 中已有初步静态 FDTD 模型及参数导出脚本，但尚无经收敛验证的仿真结果。下一步是盘点实际设备与材料参数，并核查静态模型的几何、网格和边界条件。
